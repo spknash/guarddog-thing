@@ -1,0 +1,29 @@
+
+rules:
+  - id: http-dependency
+    patterns:
+      - patterns:          
+        - pattern: |
+            "$PACKAGE": "$URL"
+        - metavariable-regex:
+            metavariable: $URL
+            regex: ^https?://.*
+      - pattern-either:          
+        - pattern-inside: |
+            "dependencies": { ... }
+        - pattern-inside: |
+              "devDependencies": { ... }
+    paths:
+      include:
+        - "**/package.json"
+        - "package.json"
+    message: Detected HTTP/HTTPS URL in dependencies or devDependencies section of package.json
+    languages:
+      - json
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-494: Download of Code Without Integrity Check"
+      owasp: "A08:2021 - Software and Data Integrity Failures"
+      description: Direct HTTP/HTTPS URLs in dependencies can pose security risks as they may not have integrity checks
+
