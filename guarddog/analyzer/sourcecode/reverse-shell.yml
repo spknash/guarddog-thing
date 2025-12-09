@@ -1,0 +1,20 @@
+rules:
+  - id: reverse-shell
+    languages:
+      - python
+    message: This package is establishing a connection that allows remote control
+    metadata:
+      description: Identify when a package establishes a conection to remote location that allows to execute arbitrary commands
+    patterns:
+      - pattern-inside: |
+          $S = $SOCKET.socket(...)
+          ...
+          $S.connect(...)
+          ...
+      - pattern-either:
+        - pattern: |
+            $OS.dup2($S.fileno(),...)
+            ...
+            $SUBPROCESS.call(...)
+        - pattern: $SUBPROCESS.Popen(...,$PARAM=$S.fileno(),...)
+    severity: WARNING

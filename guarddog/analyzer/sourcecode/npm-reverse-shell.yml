@@ -1,0 +1,46 @@
+rules:
+  - id: npm-reverse-shell
+    languages:
+      - javascript
+    message: This package is stablishing a connection that allows remote control
+    metadata:
+      description: Identify when a package establishes a conection to remote location that allows to execute arbitrary commands
+    pattern-either:
+      - patterns:
+        - pattern-inside: |
+            $S = new $NET.Socket(...)
+            ...
+            $S.connect(...)
+            ...
+        - pattern-either:
+          - patterns:
+            - pattern-inside: |
+                $S.on(...)
+            - pattern: exec(...)
+            
+          - patterns:
+            - pattern-either:
+              - pattern: |
+                  $PROC = spawn(...)
+                  ...
+              - pattern: |
+                  $PROC = $REQ.spawn(...)
+                  ...
+            - pattern-either:
+                - pattern: $S.pipe($PROC.stdin)
+                - pattern: $PROC.stdin.pipe($S)
+                - pattern: $PROC.stdout.pipe($S)
+                - pattern: $PROC.stderr.pipe($S)
+
+      - patterns:
+        - pattern-either:
+            - pattern: |
+                $VAR = $ARGS
+                ...
+                $PROC = spawn(...,$VAR,...)
+            - pattern: $PROC = spawn(...,$ARGS,...)
+        - metavariable-pattern:
+            metavariable: $ARGS
+            pattern-regex: \[.*dev/(tcp|udp).*\]
+
+    severity: WARNING
