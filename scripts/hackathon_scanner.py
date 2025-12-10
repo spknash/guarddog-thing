@@ -117,12 +117,32 @@ def save_manifest(manifest: dict):
     with open(MANIFEST_FILE, "w") as f:
         json.dump(manifest, f, indent=2)
 
-
-def is_malicious(package_name: str) -> bool:
+def typosquat_reatc(package: dict) -> bool:
     """
     Simple rule: flag packages named "reatc" (typosquat of react).
     """
+    package_name = package.get("name", "")
     return package_name.lower() == "reatc"
+
+def version_number_all_nines(package: dict) -> bool:
+    """
+    Check if the package version number consists entirely of 9s.
+    """
+    import re
+    package_version = package.get("version", "")
+    # Match version that consists only of 9s and dots (e.g., "9.9.9")
+    return bool(re.match(r'^[9\.]+$', package_version))
+
+is_malicious_rules = [
+    typosquat_reatc,
+    version_number_all_nines,
+]
+
+def is_malicious(package: dict) -> bool:
+    """
+    Check if the package matches any of the malicious rules.
+    """
+    return any(check(package) for check in is_malicious_rules)
 
 
 def sync_cache(token: str, force_download: bool = False) -> dict:
@@ -214,11 +234,12 @@ def main():
     
     for pkg_id, pkg in packages.items():
         pkg_name = pkg.get("name", "")
-        predicted_malicious = is_malicious(pkg_name)
+        predicted_malicious = is_malicious(pkg)
         
         if predicted_malicious:
             malicious_count += 1
-            print(f"  MALICIOUS: {pkg_name} (ID: {pkg_id})")
+            pkg_version = pkg.get("version", "")
+            print(f"  MALICIOUS: {pkg_name}@{pkg_version} (ID: {pkg_id})")
         
         submissions.append({
             "package_id": int(pkg_id),
