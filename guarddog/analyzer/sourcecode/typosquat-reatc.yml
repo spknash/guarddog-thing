@@ -1,0 +1,14 @@
+rules:
+  - id: typosquat-reatc
+    message: Package name "reatc" is a typosquat of "react"
+    metadata:
+      description: Detects packages named reatc (typosquat of react)
+    pattern: |
+      "name": "reatc"
+    languages:
+      - json
+    paths:
+      include:
+        - "*/package.json"
+    severity: ERROR
+
