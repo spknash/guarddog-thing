@@ -16,6 +16,10 @@ from pathlib import Path
 import requests
 import urllib3
 
+# Add parent directory to path to import rules module
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from rules import ALL_RULES
+
 # Disable SSL warnings for self-signed certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -117,32 +121,11 @@ def save_manifest(manifest: dict):
     with open(MANIFEST_FILE, "w") as f:
         json.dump(manifest, f, indent=2)
 
-def typosquat_reatc(package: dict) -> bool:
-    """
-    Simple rule: flag packages named "reatc" (typosquat of react).
-    """
-    package_name = package.get("name", "")
-    return package_name.lower() == "reatc"
-
-def version_number_all_nines(package: dict) -> bool:
-    """
-    Check if the package version number consists entirely of 9s.
-    """
-    import re
-    package_version = package.get("version", "")
-    # Match version that consists only of 9s and dots (e.g., "9.9.9")
-    return bool(re.match(r'^[9\.]+$', package_version))
-
-is_malicious_rules = [
-    typosquat_reatc,
-    version_number_all_nines,
-]
-
 def is_malicious(package: dict) -> bool:
     """
     Check if the package matches any of the malicious rules.
     """
-    return any(check(package) for check in is_malicious_rules)
+    return any(check(package) for check in ALL_RULES)
 
 
 def sync_cache(token: str, force_download: bool = False) -> dict:
